@@ -1,0 +1,6 @@
+**/*.cmi
+**/*.cmx
+**/*.o
+**/a.out
+# Drawio backup files
+**/.$*.drawio.bkp
