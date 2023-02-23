@@ -6,48 +6,33 @@
 (*   By: frdescam <marvin@42.fr>                    +#+  +:+       +#+        *)
 (*                                                +#+#+#+#+#+   +#+           *)
 (*   Created: 2022/11/27 23:10:10 by frdescam          #+#    #+#             *)
-(*   Updated: 2023/01/06 09:31:08 by frdescam         ###   ########.fr       *)
+(*   Updated: 2023/02/23 12:41:20 by frdescam         ###   ########.fr       *)
 (*                                                                            *)
 (* ************************************************************************** *)
 
 open Complex
-
-type polynomial_term_t = {
-        coefficient: float;
-        exponent: int
-}
-
-type solution =
-        | Solution of Complex.t
-        | AllReal
-        | NoSolutions
-
-type polynomial_t = {
-        left_terms: polynomial_term_t list;
-        right_terms: polynomial_term_t list;
-        reduced_form: polynomial_term_t list;
-        degree: int;
-        discriminant: float option;
-        solution_1: solution option;
-        solution_2: solution option
-}
+open Types
 
 let exit_error error_msg =
         print_endline error_msg;
         exit 1
 
 let extract_data_from_argv () =
+        let polynomial_string = Sys.argv.(1) in
+        let lexbuf = Lexing.from_string polynomial_string in
+        Polynomial_parser.parse Polynomial_lexer.lex lexbuf
+
+let compute_degree polynomial =
+        let left_degree =
+                List.fold_left (fun acc t -> max acc t.exponent) (-1) polynomial.left_terms
+        in
+        let right_degree =
+                List.fold_left (fun acc t -> max acc t.exponent) (-1) polynomial.right_terms
+        in
+        let degree = max left_degree right_degree
+        in
         {
-                left_terms = [];
-                right_terms = [];
-                reduced_form =
-                        {coefficient = 1.; exponent = 2} ::
-                        {coefficient = (-. 5.); exponent = 1} ::
-                        {coefficient = 2.; exponent = 0} :: [];
-                degree = 2;
-                discriminant = None;
-                solution_1 = None;
-                solution_2 = None
+                polynomial with degree = degree
         }
 
 let solve_0 polynomial =
@@ -150,8 +135,10 @@ let compute_solutions_positive_discriminant polynomial =
                 }
 
 let solve_2 polynomial =
+        print_endline "before disc";
         let polynomial = compute_discriminant polynomial
         in 
+        print_endline "after disc";
         match polynomial.discriminant with
         | Some d when d < 0. -> compute_solutions_negative_discriminant polynomial
         | Some d when d > 0. -> compute_solutions_positive_discriminant polynomial
@@ -184,6 +171,9 @@ let _ =
         
         let polynomial =
                 extract_data_from_argv ()
+        in
+        let polynomial =
+                compute_degree polynomial
         in
         let polynomial =
                 match polynomial.degree with
