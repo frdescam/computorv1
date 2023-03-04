@@ -6,7 +6,7 @@
 (*   By: frdescam <marvin@42.fr>                    +#+  +:+       +#+        *)
 (*                                                +#+#+#+#+#+   +#+           *)
 (*   Created: 2022/11/27 23:10:10 by frdescam          #+#    #+#             *)
-(*   Updated: 2023/02/23 12:41:20 by frdescam         ###   ########.fr       *)
+(*   Updated: 2023/03/04 23:17:55 by frdescam         ###   ########.fr       *)
 (*                                                                            *)
 (* ************************************************************************** *)
 
@@ -18,22 +18,73 @@ let exit_error error_msg =
         exit 1
 
 let extract_data_from_argv () =
-        let polynomial_string = Sys.argv.(1) in
-        let lexbuf = Lexing.from_string polynomial_string in
-        Polynomial_parser.parse Polynomial_lexer.lex lexbuf
+        try
+        (
+                let polynomial_string = Sys.argv.(1) in
+                let lexbuf = Lexing.from_string polynomial_string in
+                Polynomial_parser.parse Polynomial_lexer.lex lexbuf
+        ) with e -> exit_error "Syntax error"
 
-let compute_degree polynomial =
-        let left_degree =
-                List.fold_left (fun acc t -> max acc t.exponent) (-1) polynomial.left_terms
+let add_default_terms polynomial =
+        let reduced_form = polynomial.reduced_form
         in
-        let right_degree =
-                List.fold_left (fun acc t -> max acc t.exponent) (-1) polynomial.right_terms
+        let degree = polynomial.degree
         in
-        let degree = max left_degree right_degree
+        let reduced_form =
+                if not (List.exists (fun {exponent; _} -> exponent = 0) reduced_form)
+                then
+                        {coefficient = 0.; exponent = 0} :: reduced_form
+                else
+                        reduced_form
         in
+        let reduced_form =
+                if degree > 0 && not (List.exists (fun {exponent; _} -> exponent = 1) reduced_form)
+                then
+                        {coefficient = 0.; exponent = 1} :: reduced_form
+                else
+                        reduced_form
+        in
+        let reduced_form =
+                if degree > 1 && not (List.exists (fun {exponent; _} -> exponent = 2) reduced_form)
+                then
+                        {coefficient = 0.; exponent = 2} :: reduced_form
+                else
+                        reduced_form
+        in
+        let reduced_form = List.sort (fun {exponent=e1; _} {exponent=e2; _} ->
+                compare e2 e1) reduced_form
+        in
+        { polynomial with reduced_form = reduced_form }
+
+let find_degree polynomial =
+        let degree = match polynomial.reduced_form with
+        | [] -> 0
+        | hd :: _ -> hd.exponent
+        in
+        { polynomial with degree = degree }
+
+let reduce_polynomial polynomial =
+        let all_terms = polynomial.left_terms @ List.map (fun {coefficient; exponent} ->
         {
-                polynomial with degree = degree
-        }
+                coefficient = -1. *. coefficient; exponent
+        }) polynomial.right_terms
+        in
+        let grouped_terms = List.fold_left (fun acc t ->
+                let exponent = t.exponent in
+                let (same, other) = List.partition (fun t' -> t'.exponent = exponent) acc in
+                let coefficient = List.fold_left
+                        (fun acc {coefficient; _} -> acc +. coefficient)
+                        0.
+                        (t :: same)
+                in
+                (if coefficient = 0. then other else {coefficient; exponent} :: other))
+        []
+        all_terms
+        in
+        let reduced_terms = List.sort (fun {exponent=e1; _} {exponent=e2; _} ->
+                compare e2 e1) grouped_terms
+        in
+        { polynomial with reduced_form = reduced_terms }
 
 let solve_0 polynomial =
         let a = (List.nth polynomial.reduced_form 0).coefficient
@@ -65,6 +116,12 @@ let compute_discriminant polynomial =
         and b = (List.nth polynomial.reduced_form 1).coefficient
         and c = (List.nth polynomial.reduced_form 2).coefficient
         in
+        print_float a;
+        print_endline "";
+        print_float b;
+        print_endline "";
+        print_float c;
+        print_endline "";
                 {
                         (* Discriminent = b² - 4ac *)
                         polynomial with discriminant =
@@ -135,10 +192,8 @@ let compute_solutions_positive_discriminant polynomial =
                 }
 
 let solve_2 polynomial =
-        print_endline "before disc";
         let polynomial = compute_discriminant polynomial
         in 
-        print_endline "after disc";
         match polynomial.discriminant with
         | Some d when d < 0. -> compute_solutions_negative_discriminant polynomial
         | Some d when d > 0. -> compute_solutions_positive_discriminant polynomial
@@ -148,11 +203,11 @@ let print_solution solution =
         let re = solution.re in
         let im = solution.im in
         if im = 0.
-                then Printf.printf "%.1f\n" re
+                then Printf.printf "%.3f\n" re
         else
                 let operator = if im > 0. then '+' else '-' in
                 let im = abs_float im in
-                Printf.printf "%.1f %c %.1fi\n" re operator im
+                Printf.printf "%.3f %c %.3fi\n" re operator im
 
 let print_solutions polynomial =
         match polynomial.solution_1 with
@@ -168,12 +223,9 @@ let print_solutions polynomial =
 let _ =
         if Array.length Sys.argv != 2 then
                 exit_error "Error: invalid argument count";
-        
+
         let polynomial =
-                extract_data_from_argv ()
-        in
-        let polynomial =
-                compute_degree polynomial
+                extract_data_from_argv () |> reduce_polynomial |> find_degree |> add_default_terms 
         in
         let polynomial =
                 match polynomial.degree with
