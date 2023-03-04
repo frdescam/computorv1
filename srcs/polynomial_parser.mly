@@ -6,7 +6,7 @@
 (*   By: frdescam <marvin@42.fr>                    +#+  +:+       +#+        *)
 (*                                                +#+#+#+#+#+   +#+           *)
 (*   Created: 2023/02/06 20:11:39 by frdescam          #+#    #+#             *)
-(*   Updated: 2023/02/23 11:42:00 by frdescam         ###   ########.fr       *)
+(*   Updated: 2023/02/24 11:24:42 by frdescam         ###   ########.fr       *)
 (*                                                                            *)
 (* ************************************************************************** *)
 
@@ -16,7 +16,7 @@
 
 %token <int> INT
 %token <float> FLOAT
-%token PLUS MINUS TIMES DIVIDE POWER EQUAL VAR EOF
+%token PLUS MINUS TIMES POWER EQUAL VAR EOF
 %type <Types.polynomial_term_t> term
 %type <Types.polynomial_term_t list> terms_list
 %type <float> number
@@ -60,6 +60,7 @@ signed_term:
         | MINUS t = term { { t with coefficient = -. t.coefficient } }
 
 unsigned_term:
+        | c = number TIMES VAR POWER e = INT { { coefficient = c; exponent = e } }
         | c = number VAR POWER e = INT { { coefficient = c; exponent = e } }
         | c = number VAR { { coefficient = c; exponent = 1 } }
         | c = number { { coefficient = c; exponent = 0 } }
