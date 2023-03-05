@@ -6,7 +6,7 @@
 (*   By: frdescam <marvin@42.fr>                    +#+  +:+       +#+        *)
 (*                                                +#+#+#+#+#+   +#+           *)
 (*   Created: 2022/11/27 23:10:10 by frdescam          #+#    #+#             *)
-(*   Updated: 2023/03/04 23:17:55 by frdescam         ###   ########.fr       *)
+(*   Updated: 2023/03/05 17:26:34 by frdescam         ###   ########.fr       *)
 (*                                                                            *)
 (* ************************************************************************** *)
 
@@ -116,12 +116,6 @@ let compute_discriminant polynomial =
         and b = (List.nth polynomial.reduced_form 1).coefficient
         and c = (List.nth polynomial.reduced_form 2).coefficient
         in
-        print_float a;
-        print_endline "";
-        print_float b;
-        print_endline "";
-        print_float c;
-        print_endline "";
                 {
                         (* Discriminent = b² - 4ac *)
                         polynomial with discriminant =
