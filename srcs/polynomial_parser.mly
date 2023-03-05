@@ -6,7 +6,7 @@
 (*   By: frdescam <marvin@42.fr>                    +#+  +:+       +#+        *)
 (*                                                +#+#+#+#+#+   +#+           *)
 (*   Created: 2023/02/06 20:11:39 by frdescam          #+#    #+#             *)
-(*   Updated: 2023/02/24 11:24:42 by frdescam         ###   ########.fr       *)
+(*   Updated: 2023/03/05 17:45:32 by frdescam         ###   ########.fr       *)
 (*                                                                            *)
 (* ************************************************************************** *)
 
@@ -61,8 +61,13 @@ signed_term:
 
 unsigned_term:
         | c = number TIMES VAR POWER e = INT { { coefficient = c; exponent = e } }
+        | TIMES VAR POWER e = INT { { coefficient = 1.; exponent = e } }
         | c = number VAR POWER e = INT { { coefficient = c; exponent = e } }
+        | VAR POWER e = INT { { coefficient = 1.; exponent = e } }
+        | c = number TIMES VAR { { coefficient = c; exponent = 1 } }
+        | TIMES VAR { { coefficient = 1.; exponent = 1 } }
         | c = number VAR { { coefficient = c; exponent = 1 } }
+        | VAR { { coefficient = 1.; exponent = 1 } }
         | c = number { { coefficient = c; exponent = 0 } }
 
 number:
