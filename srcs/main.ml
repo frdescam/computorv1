@@ -6,7 +6,7 @@
 (*   By: frdescam <marvin@42.fr>                    +#+  +:+       +#+        *)
 (*                                                +#+#+#+#+#+   +#+           *)
 (*   Created: 2022/11/27 23:10:10 by frdescam          #+#    #+#             *)
-(*   Updated: 2023/03/05 17:26:34 by frdescam         ###   ########.fr       *)
+(*   Updated: 2023/03/10 17:10:37 by frdescam         ###   ########.fr       *)
 (*                                                                            *)
 (* ************************************************************************** *)
 
@@ -197,22 +197,60 @@ let print_solution solution =
         let re = solution.re in
         let im = solution.im in
         if im = 0.
-                then Printf.printf "%.3f\n" re
+                then Printf.printf "%f\n" re
         else
                 let operator = if im > 0. then '+' else '-' in
                 let im = abs_float im in
-                Printf.printf "%.3f %c %.3fi\n" re operator im
+                Printf.printf "%f %c %fi\n" re operator im
 
 let print_solutions polynomial =
         match polynomial.solution_1 with
         | Some NoSolutions -> print_endline "There is no solution to this polynomial."
         | Some AllReal -> print_endline "All real numbers are solution of this polynomial."
-        | Some Solution s -> print_string "x1: "; print_solution s
+        | Some Solution s -> print_string "x1 :            "; print_solution s
         | None -> ();
         ;
         match polynomial.solution_2 with
-        | Some Solution s -> print_string "x2: "; print_solution s
+        | Some Solution s -> print_string "x2 :            "; print_solution s
         | _ -> ()
+
+let print_polynomial_term term =
+        if term.coefficient != 1. then
+        (
+                if term.coefficient >= 0. then
+                        print_string "+ "
+                else
+                        print_string "- ";
+                print_float (abs_float term.coefficient)
+        );
+        if term.exponent != 0 then
+        (
+                print_string "x";
+                if term.exponent != 1 then
+                (
+                        print_string "^";
+                        print_int term.exponent
+                )
+        );
+        print_string ""
+
+let print_reduced_form polynomial =
+        print_string "Reduced form :  ";
+        List.iter (fun t ->
+                print_polynomial_term t;
+                print_string " "
+        ) polynomial.reduced_form;
+        print_string "\n"
+
+let print_discriminant polynomial =
+        match polynomial.discriminant with
+        | Some d -> Printf.printf "Discriminant :  %f\n" d
+        | None -> ()
+
+let print_resolved_polynomial polynomial =
+        print_reduced_form polynomial;
+        print_discriminant polynomial;
+        print_solutions polynomial
 
 let _ =
         if Array.length Sys.argv != 2 then
@@ -228,9 +266,4 @@ let _ =
                 | 2 -> solve_2 polynomial
                 | _ -> exit_error "Error: polynomials after 2nd degree aren't supported"
         in
-        (
-                match polynomial.discriminant with
-                | Some d -> Printf.printf "Discriminant : %f\n" d
-                | None -> ()
-        );
-        print_solutions polynomial
+        print_resolved_polynomial polynomial
